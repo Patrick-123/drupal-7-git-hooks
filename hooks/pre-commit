@@ -1,0 +1,32 @@
+#!/bin/bash
+
+git diff --cached --name-only | while read FILE; do
+if [[ "$FILE" =~ ^.+(php|inc|module|install|test)$ ]]; 
+    then
+    if [[ -f $FILE ]]; 
+        then
+        php -l "$FILE" 1> /dev/null
+        if [ $? -ne 0 ]; 
+            then
+            echo -e "\033[33m Aborting commit due to files with syntax errors. \033[m" >&2
+            exit 1
+        fi
+    fi
+fi
+done || exit $?
+
+if [ $? -eq 0 ]; 
+    then
+        /Users/patrick/.composer/vendor/bin/phpcs --standard=/Users/patrick/drupal_coder_module/coder/coder_sniffer/Drupal "$FILE" 1> /dev/null
+        if [ $? -ne 0 ]; 
+            then
+            echo -e "\033[33m Warning, some files do not respecting the Drupal coding standards. Commit was not aborted. \033[m" >&2
+        git diff --cached --name-only | while read FILE; do
+        RESULT=$(grep "dsm(\|dpm(\|sdpm(\|dpr(\|dprint_r(\|db_queryd(\|kpr(\|kprint_r(\|var_dump(\|error_log(\|drupal_debug(\|temppp" "$FILE")
+        if [ ! -z $RESULT ]; 
+            then
+            echo -e "\033[33m Warning, the commit contains a call to one of: dpm(), dsm(), sdpm, dpr, dprint_r, db_queryd, kprint_r, error_log, drupal_debug. Commit was not aborted, however. \033[m" >&2
+        fi
+            done
+    fi
+fi

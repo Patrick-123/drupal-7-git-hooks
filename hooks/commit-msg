@@ -1,0 +1,10 @@
+ASPELL=$(which aspell)
+if [ $? -ne 0 ]; then
+    echo "\033[33m Aspell not installed - unable to check spelling \033[m" >&2
+    exit
+else
+    WORDS=$($ASPELL list < "$1")
+fi
+if [ -n "$WORDS" ]; then
+    echo "\033[33m Possible spelling errors found in commit message. Use git commit --amend -m '<new message>' to change the message.\n\tPossible mispelled words: \033[m" $WORDS >&2
+fi
